@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🃏 卡牌对战</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .game-title {
+            text-align: center;
+            padding: 20px;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #ffd700, #ff6b6b, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .player-info, .ai-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .player-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .ai-avatar {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .health-bar {
+            width: 200px;
+        }
+
+        .health-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .health-track {
+            height: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .health-fill.low {
+            background: linear-gradient(90deg, #f85032, #e73827);
+        }
+
+        .health-fill.critical {
+            background: linear-gradient(90deg, #ff0000, #ff4444);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .turn-indicator {
+            text-align: center;
+            padding: 10px 30px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .turn-indicator.player-turn {
+            background: rgba(102, 126, 234, 0.3);
+            border: 2px solid #667eea;
+        }
+
+        .turn-indicator.ai-turn {
+            background: rgba(246, 87, 108, 0.3);
+            border: 2px solid #f5576c;
+        }
+
+        /* 战斗区域 */
+        .battle-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin: 30px 0;
+            min-height: 200px;
+        }
+
+        .battle-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .side-label {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .card-slot {
+            width: 120px;
+            height: 170px;
+            border: 3px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .card-slot.active {
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .card-slot.filled {
+            border: none;
+        }
+
+        .card {
+            width: 120px;
+            height: 170px;
+            background: linear-gradient(135deg, #2d3748, #1a202c);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--card-color), transparent);
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.05);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+        }
+
+        .card-name {
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .card-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 1.2rem;
+        }
+
+        .card-attack {
+            color: #ff6b6b;
+        }
+
+        .card-defense {
+            color: #4ecdc4;
+        }
+
+        .card-type {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* VS 标志 */
+        .vs-badge {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ffd700, #ff6b6b);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* 结果显示 */
+        .battle-result {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .battle-result.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        .battle-result.win {
+            background: linear-gradient(135deg, rgba(46, 213, 115, 0.3), rgba(46, 213, 115, 0.1));
+            border: 2px solid #2ed573;
+            color: #2ed573;
+        }
+
+        .battle-result.lose {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.3), rgba(255, 107, 107, 0.1));
+            border: 2px solid #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .battle-result.draw {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.1));
+            border: 2px solid #ffd700;
+            color: #ffd700;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 玩家手牌 */
+        .hand-area {
+            margin-top: 30px;
+        }
+
+        .hand-label {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .player-hand {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            min-height: 200px;
+        }
+
+        .hand-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .hand-card:hover {
+            transform: translateY(-20px);
+        }
+
+        .hand-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* 消息日志 */
+        .battle-log {
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-title {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 游戏开始/重新开始按钮 */
+        .game-controls {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.5);
+        }
+
+        /* 游戏结束遮罩 */
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .game-over-overlay.show {
+            display: flex;
+        }
+
+        .game-over-content {
+            text-align: center;
+            animation: scaleIn 0.5s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .game-over-title {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .game-over-title.victory {
+            background: linear-gradient(90deg, #ffd700, #ffeb3b, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .game-over-title.defeat {
+            background: linear-gradient(90deg, #ff6b6b, #ff8e8e, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .game-over-stats {
+            margin: 30px 0;
+            font-size: 1.2rem;
+        }
+
+        .game-over-stats div {
+            margin: 10px 0;
+        }
+
+        /* 卡牌颜色 */
+        .card-attack-type { --card-color: #ff6b6b; }
+        .card-defense-type { --card-color: #4ecdc4; }
+        .card-magic-type { --card-color: #a855f7; }
+        .card-special-type { --card-color: #ffd700; }
+
+        /* 动画 */
+        .card-attack-animation {
+            animation: attack 0.5s ease;
+        }
+
+        @keyframes attack {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(50px) rotate(10deg); }
+            100% { transform: translateX(0); }
+        }
+
+        .card-defend-animation {
+            animation: defend 0.5s ease;
+        }
+
+        @keyframes defend {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* 伤害数字 */
+        .damage-number {
+            position: absolute;
+            font-size: 2rem;
+            font-weight: bold;
+            animation: damageFloat 1s ease forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .damage-number.damage {
+            color: #ff6b6b;
+        }
+
+        .damage-number.block {
+            color: #4ecdc4;
+        }
+
+        @keyframes damageFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="game-title">🃏 卡牌对战</h1>
+    
+    <div class="game-container">
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="player-info">
+                <div class="avatar player-avatar">🧙‍♂️</div>
+                <div class="health-bar">
+                    <div class="health-label">
+                        <span>玩家</span>
+                        <span id="player-health-text">100/100</span>
+                    </div>
+                    <div class="health-track">
+                        <div class="health-fill" id="player-health-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="turn-indicator player-turn" id="turn-indicator">
+                🎮 你的回合
+            </div>
+            
+            <div class="ai-info">
+                <div class="health-bar">
+                    <div class="health-label">
+                        <span>AI</span>
+                        <span id="ai-health-text">100/100</span>
+                    </div>
+                    <div class="health-track">
+                        <div class="health-fill" id="ai-health-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="avatar ai-avatar">🤖</div>
+            </div>
+        </div>
+
+        <!-- 战斗区域 -->
+        <div class="battle-area">
+            <div class="battle-side">
+                <div class="side-label">你的出牌</div>
+                <div class="card-slot active" id="player-slot"></div>
+            </div>
+            
+            <div class="vs-badge">VS</div>
+            
+            <div class="battle-side">
+                <div class="side-label">AI出牌</div>
+                <div class="card-slot" id="ai-slot"></div>
+            </div>
+        </div>
+
+        <!-- 本轮结果 -->
+        <div class="battle-result" id="battle-result"></div>
+
+        <!-- 手牌区域 -->
+        <div class="hand-area">
+            <div class="hand-label">🎴 你的手牌（点击出牌）</div>
+            <div class="player-hand" id="player-hand"></div>
+        </div>
+
+        <!-- 游戏控制 -->
+        <div class="game-controls" id="game-controls">
+            <button class="btn btn-primary" id="start-btn" onclick="startGame()">⚔️ 开始对战</button>
+        </div>
+
+        <!-- 战斗日志 -->
+        <div class="battle-log">
+            <div class="log-title">📜 战斗日志</div>
+            <div id="battle-log-content">
+                <div class="log-entry">等待游戏开始...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束遮罩 -->
+    <div class="game-over-overlay" id="game-over">
+        <div class="game-over-content">
+            <div class="game-over-title" id="game-over-title">胜利</div>
+            <div class="game-over-stats" id="game-over-stats"></div>
+            <button class="btn btn-primary" onclick="startGame()">🔄 再来一局</button>
+        </div>
+    </div>
+
+    <script>
+        // 卡牌数据
+        const cardTypes = [
+            { name: '⚔️ 战士', icon: '⚔️', type: 'attack', attack: 15, defense: 5, color: '#ff6b6b' },
+            { name: '🛡️ 骑士', icon: '🛡️', type: 'defense', attack: 5, defense: 20, color: '#4ecdc4' },
+            { name: '🧙 法师', icon: '🧙', type: 'magic', attack: 18, defense: 3, color: '#a855f7' },
+            { name: '🏹 猎人', icon: '🏹', type: 'attack', attack: 14, defense: 8, color: '#ff6b6b' },
+            { name: '🧝 精灵', icon: '🧝', type: 'magic', attack: 12, defense: 12, color: '#a855f7' },
+            { name: '💀 死灵', icon: '💀', type: 'special', attack: 20, defense: 0, color: '#ffd700' },
+            { name: '🐉 巨龙', icon: '🐉', type: 'special', attack: 25, defense: 10, color: '#ffd700' },
+            { name: '🦊 狐妖', icon: '🦊', type: 'magic', attack: 10, defense: 15, color: '#a855f7' },
+            { name: '🗡️ 刺客', icon: '🗡️', type: 'attack', attack: 22, defense: 2, color: '#ff6b6b' },
+            { name: '🪖 圣骑士', icon: '🪖', type: 'defense', attack: 8, defense: 18, color: '#4ecdc4' },
+            { name: '🔮 巫师', icon: '🔮', type: 'magic', attack: 16, defense: 6, color: '#a855f7' },
+            { name: '🦁 狮王', icon: '🦁', type: 'special', attack: 19, defense: 8, color: '#ffd700' },
+        ];
+
+        // 游戏状态
+        let gameState = {
+            playerHealth: 100,
+            aiHealth: 100,
+            maxHealth: 100,
+            playerHand: [],
+            aiHand: [],
+            round: 0,
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            isPlayerTurn: true,
+            gameStarted: false
+        };
+
+        // 初始化游戏
+        function initGame() {
+            gameState = {
+                playerHealth: 100,
+                aiHealth: 100,
+                maxHealth: 100,
+                playerHand: [],
+                aiHand: [],
+                round: 0,
+                wins: gameState.wins,
+                losses: gameState.losses,
+                draws: gameState.draws,
+                isPlayerTurn: true,
+                gameStarted: false
+            };
+            updateHealthBars();
+            clearBattleArea();
+            document.getElementById('battle-result').classList.remove('show');
+            document.getElementById('game-controls').innerHTML = '<button class="btn btn-primary" id="start-btn" onclick="startGame()">⚔️ 开始对战</button>';
+        }
+
+        // 开始游戏
+        function startGame() {
+            gameState.gameStarted = true;
+            gameState.round = 0;
+            gameState.playerHealth = 100;
+            gameState.aiHealth = 100;
+            
+            // 发牌
+            gameState.playerHand = drawCards(5);
+            gameState.aiHand = drawCards(5);
+            
+            updateHealthBars();
+            renderHand();
+            clearBattleArea();
+            
+            document.getElementById('game-controls').innerHTML = '';
+            document.getElementById('battle-result').classList.remove('show');
+            document.getElementById('game-over').classList.remove('show');
+            
+            addLog('🎮 游戏开始！');
+            addLog('双方各获得5张手牌');
+            updateTurnIndicator();
+        }
+
+        // 抽牌
+        function drawCards(count) {
+            const cards = [];
+            for (let i = 0; i < count; i++) {
+                const randomCard = { ...cardTypes[Math.floor(Math.random() * cardTypes.length)] };
+                randomCard.id = Date.now() + '-' + Math.random();
+                cards.push(randomCard);
+            }
+            return cards;
+        }
+
+        // 渲染手牌
+        function renderHand() {
+            const handContainer = document.getElementById('player-hand');
+            handContainer.innerHTML = '';
+            
+            gameState.playerHand.forEach((card, index) => {
+                const cardEl = createCardElement(card, true);
+                cardEl.onclick = () => playerPlayCard(index);
+                handContainer.appendChild(cardEl);
+            });
+        }
+
+        // 创建卡牌元素
+        function createCardElement(card, isPlayable = false) {
+            const div = document.createElement('div');
+            div.className = `card card-${card.type}-type ${isPlayable ? 'hand-card' : ''}`;
+            div.innerHTML = `
+                <div class="card-icon">${card.icon}</div>
+                <div class="card-name">${card.name}</div>
+                <div class="card-stats">
+                    <span class="card-attack">⚔️ ${card.attack}</span>
+                    <span class="card-defense">🛡️ ${card.defense}</span>
+                </div>
+                <div class="card-type">${getTypeName(card.type)}</div>
+            `;
+            return div;
+        }
+
+        // 获取类型名称
+        function getTypeName(type) {
+            const names = {
+                attack: '⚔️ 攻击',
+                defense: '🛡️ 防御',
+                magic: '✨ 魔法',
+                special: '🌟 特殊'
+            };
+            return names[type] || type;
+        }
+
+        // 玩家出牌
+        function playerPlayCard(index) {
+            if (!gameState.isPlayerTurn || !gameState.gameStarted) return;
+            
+            // 从手牌移除（用完就丢弃，不放回）
+            const card = gameState.playerHand.splice(index, 1)[0];
+            
+            // 显示玩家卡牌
+            const playerSlot = document.getElementById('player-slot');
+            playerSlot.innerHTML = '';
+            playerSlot.classList.add('filled');
+            const cardEl = createCardElement(card);
+            cardEl.classList.add('card-attack-animation');
+            playerSlot.appendChild(cardEl);
+            
+            addLog(`你出牌：${card.name} (⚔️${card.attack} 🛡️${card.defense})`);
+            
+            // 禁用手牌
+            document.querySelectorAll('.hand-card').forEach(c => c.classList.add('disabled'));
+            
+            // AI回合
+            gameState.isPlayerTurn = false;
+            updateTurnIndicator();
+            
+            setTimeout(() => aiPlayCard(card), 1000);
+        }
+
+        // AI出牌
+        function aiPlayCard(playerCard) {
+            // AI选择策略：优先选择克制对手的牌
+            let bestIndex = 0;
+            let bestScore = -Infinity;
+            
+            gameState.aiHand.forEach((card, index) => {
+                let score = card.attack + card.defense;
+                
+                // 如果有克制关系，调整分数
+                if (card.type === 'defense' && playerCard.type === 'attack') {
+                    score += 5;
+                }
+                if (card.type === 'attack' && playerCard.type === 'defense') {
+                    score += 3;
+                }
+                if (card.type === 'magic') {
+                    score += 2;
+                }
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestIndex = index;
+                }
+            });
+            
+            // 从AI手牌移除（用完就丢弃，不放回）
+            const card = gameState.aiHand.splice(bestIndex, 1)[0];
+            
+            // 显示AI卡牌
+            const aiSlot = document.getElementById('ai-slot');
+            aiSlot.innerHTML = '';
+            aiSlot.classList.add('filled');
+            const cardEl = createCardElement(card);
+            cardEl.classList.add('card-defend-animation');
+            aiSlot.appendChild(cardEl);
+            
+            addLog(`AI出牌：${card.name} (⚔️${card.attack} 🛡️${card.defense})`);
+            
+            // 计算伤害
+            setTimeout(() => calculateBattle(playerCard, card), 500);
+        }
+
+        // 计算战斗结果
+        function calculateBattle(playerCard, aiCard) {
+            gameState.round++;
+            
+            // 计算有效攻击
+            const playerDamage = Math.max(0, playerCard.attack - aiCard.defense);
+            const aiDamage = Math.max(0, aiCard.attack - playerCard.defense);
+            
+            // 应用伤害
+            gameState.aiHealth = Math.max(0, gameState.aiHealth - playerDamage);
+            gameState.playerHealth = Math.max(0, gameState.playerHealth - aiDamage);
+            
+            // 显示伤害数字
+            showDamageNumber('ai-slot', playerDamage, 'damage');
+            showDamageNumber('player-slot', aiDamage, 'damage');
+            
+            updateHealthBars();
+            
+            // 记录日志
+            if (playerDamage > 0) {
+                addLog(`你对AI造成 ${playerDamage} 点伤害！`);
+            } else {
+                addLog('你的攻击被AI完全抵挡！');
+            }
+            
+            if (aiDamage > 0) {
+                addLog(`AI对你造成 ${aiDamage} 点伤害！`);
+            } else {
+                addLog('AI的攻击被你完全抵挡！');
+            }
+            
+            // 显示结果
+            showBattleResult(playerDamage, aiDamage);
+            
+            // 检查游戏结束
+            setTimeout(() => {
+                if (checkGameOver()) return;
+                
+                // 回合结束，补充手牌
+                setTimeout(() => {
+                    endRound();
+                }, 1500);
+            }, 1000);
+        }
+
+        // 显示伤害数字
+        function showDamageNumber(slotId, amount, type) {
+            const slot = document.getElementById(slotId);
+            const damageEl = document.createElement('div');
+            damageEl.className = `damage-number ${type}`;
+            damageEl.textContent = type === 'damage' ? `-${amount}` : `${amount}`;
+            slot.style.position = 'relative';
+            slot.appendChild(damageEl);
+            
+            setTimeout(() => damageEl.remove(), 1000);
+        }
+
+        // 显示战斗结果
+        function showBattleResult(playerDamage, aiDamage) {
+            const resultEl = document.getElementById('battle-result');
+            
+            if (playerDamage > aiDamage) {
+                resultEl.textContent = '✨ 本轮胜利！';
+                resultEl.className = 'battle-result show win';
+                gameState.wins++;
+            } else if (playerDamage < aiDamage) {
+                resultEl.textContent = '💔 本轮失败！';
+                resultEl.className = 'battle-result show lose';
+                gameState.losses++;
+            } else {
+                resultEl.textContent = '⚖️ 本轮平局！';
+                resultEl.className = 'battle-result show draw';
+                gameState.draws++;
+            }
+        }
+
+        // 更新血量条
+        function updateHealthBars() {
+            const playerPercent = (gameState.playerHealth / gameState.maxHealth) * 100;
+            const aiPercent = (gameState.aiHealth / gameState.maxHealth) * 100;
+            
+            const playerBar = document.getElementById('player-health-bar');
+            const aiBar = document.getElementById('ai-health-bar');
+            
+            playerBar.style.width = playerPercent + '%';
+            aiBar.style.width = aiPercent + '%';
+            
+            playerBar.className = 'health-fill' + 
+                (playerPercent <= 20 ? ' critical' : playerPercent <= 40 ? ' low' : '');
+            aiBar.className = 'health-fill' + 
+                (aiPercent <= 20 ? ' critical' : aiPercent <= 40 ? ' low' : '');
+            
+            document.getElementById('player-health-text').textContent = 
+                `${gameState.playerHealth}/${gameState.maxHealth}`;
+            document.getElementById('ai-health-text').textContent = 
+                `${gameState.aiHealth}/${gameState.maxHealth}`;
+        }
+
+        // 更新回合指示器
+        function updateTurnIndicator() {
+            const indicator = document.getElementById('turn-indicator');
+            if (gameState.isPlayerTurn) {
+                indicator.textContent = '🎮 你的回合';
+                indicator.className = 'turn-indicator player-turn';
+            } else {
+                indicator.textContent = '🤖 AI回合';
+                indicator.className = 'turn-indicator ai-turn';
+            }
+        }
+
+        // 回合结束
+        function endRound() {
+            // 补充手牌（如果不够的话）
+            if (gameState.playerHand.length < 5) {
+                gameState.playerHand.push(...drawCards(1));
+            }
+            if (gameState.aiHand.length < 5) {
+                gameState.aiHand.push(...drawCards(1));
+            }
+            
+            // 清除战场
+            clearBattleArea();
+            document.getElementById('battle-result').classList.remove('show');
+            
+            // 切换回合
+            gameState.isPlayerTurn = true;
+            updateTurnIndicator();
+            renderHand();
+            
+            addLog(`--- 第 ${gameState.round + 1} 回合 ---`);
+        }
+
+        // 清除战场
+        function clearBattleArea() {
+            const playerSlot = document.getElementById('player-slot');
+            const aiSlot = document.getElementById('ai-slot');
+            playerSlot.innerHTML = '';
+            aiSlot.innerHTML = '';
+            playerSlot.classList.remove('filled');
+            aiSlot.classList.remove('filled');
+        }
+
+        // 检查游戏结束
+        function checkGameOver() {
+            if (gameState.playerHealth <= 0 || gameState.aiHealth <= 0) {
+                const playerWon = gameState.aiHealth <= 0;
+                
+                setTimeout(() => {
+                    showGameOver(playerWon);
+                }, 1000);
+                
+                return true;
+            }
+            return false;
+        }
+
+        // 显示游戏结束
+        function showGameOver(playerWon) {
+            const overlay = document.getElementById('game-over');
+            const title = document.getElementById('game-over-title');
+            const stats = document.getElementById('game-over-stats');
+            
+            if (playerWon) {
+                title.textContent = '🏆 胜利！';
+                title.className = 'game-over-title victory';
+                addLog('🎉 恭喜！你获得了最终胜利！');
+            } else {
+                title.textContent = '💔 失败';
+                title.className = 'game-over-title defeat';
+                addLog('😢 很遗憾，你输了...');
+            }
+            
+            stats.innerHTML = `
+                <div>🏆 胜利次数：${gameState.wins}</div>
+                <div>💔 失败次数：${gameState.losses}</div>
+                <div>⚖️ 平局次数：${gameState.draws}</div>
+                <div>📊 总回合数：${gameState.round}</div>
+            `;
+            
+            overlay.classList.add('show');
+            gameState.gameStarted = false;
+        }
+
+        // 添加日志
+        function addLog(message) {
+            const logContent = document.getElementById('battle-log-content');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            logContent.insertBefore(entry, logContent.firstChild);
+            
+            // 限制日志数量
+            while (logContent.children.length > 50) {
+                logContent.removeChild(logContent.lastChild);
+            }
+        }
+
+        // 初始化
+        initGame();
+    </script>
+</body>
+</html>
