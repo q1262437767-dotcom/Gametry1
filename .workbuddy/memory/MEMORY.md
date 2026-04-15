@@ -1,0 +1,103 @@
+# MEMORY.md - 洪武铁匠开发记忆
+
+## 用户信息
+- 学生，正在用 Unity 开发卡牌 RPG《至正铁匠》
+- 项目路径：D:\GAMETRY\Unity\Gametry
+- 说话风格：轻松口语化，常自称"兄弟"
+- 偏好：先聊宽泛思路再深入技术细节
+
+## 游戏设定
+- **至正铁匠**：元末至正年间（1341-1370）的铁匠
+- **核心立意**：主角行为是"至正"的 —— 为了结束战争而创造战争兵器
+- **哲学核心**：通往正义的路，沾满鲜血
+
+## Unity 版本
+- **Unity 6**（2026-04-15 升级自 2022.3 LTS）
+- VS: Community 2026 (18.5.0)
+- Input System 包已安装，Active Input Handling = Both
+- 提示：Input.GetKey() 过时警告不影响运行，可无视
+
+## 项目现状
+
+### 代码结构
+```
+Assets/Scripts/
+├─ Player/
+│   ├─ Palyermovement.cs     # WASD/方向键移动 + 朝向翻转
+│   ├─ PlayerAttack.cs       # J 键连击攻击
+│   ├─ PlayerDefense.cs       # K 键防御（按住）
+│   └─ PlayerHealth.cs        # 玩家血量、防御减伤、死亡
+├─ NPC/
+│   └─ NPCWarriorAI.cs        # AI：追击、攻击、防御、伤害系统
+└─ Shared/
+    ├─ FactionSelector.cs     # 阵营选择
+    ├─ Faction.cs             # 阵营枚举
+    └─ AttackHitbox.cs        # 攻击碰撞检测
+```
+
+### 战斗系统（已完成）
+| 功能 | 状态 |
+|------|------|
+| Player 攻击 | J 连击，Attack1=10伤害，Attack2=15伤害 |
+| Player 防御 | K 按住防御，伤害-10 |
+| NPC 追击 | 按阵营敌对关系追击 |
+| NPC 攻击 | 攻击概率60%，防御概率40% |
+| NPC 互殴 | 伤害-10 |
+| 死亡处理 | Player SetActive(false)，NPC Destroy |
+| 击退眩晕 | knockbackForce=5, stunTime=0.2 |
+
+### 血条UI（2026-04-15）
+- Image + Canvas Group 方案
+- 血条宽度随血量百分比缩放（Pivot X=0，从左边锚点）
+- 锚点预设选择 left+top 等位置
+
+### 属性面板UI（2026-04-15）
+- `StatsUI.cs` 显示4个属性：Health/Strength/Speed/Knockback
+- `StatsCanvasController.cs` 控制开关
+- P键打开/关闭，ESC关闭
+- 打开时 Time.timeScale=0 暂停游戏
+
+### Strength属性（2026-04-15）
+- Attack1 = Strength × 1
+- Attack2 = Strength × 1.5
+- Strength 默认值 = 10
+
+### 伤害保护机制
+- `isAttacking` + `lastHitTime`(0.05秒) 双保险防止重复触发
+- `Physics2D.OverlapCircleAll` 检测范围内敌人
+
+### 击退系统（2026-04-15）
+- PlayerAttack 和 NPCWarriorAI 各有 knockbackForce=5, knockbackStunTime=0.2
+- `isKnockedBack` 变量控制眩晕状态，眩晕时禁止移动
+- PlayerMovement 和 NPCWarriorAI Update() 中检查 isKnockedBack
+
+### 数值管理系统（2026-04-15）
+- 创建 `StatsManager.cs` 单例模式，集中管理所有游戏数值
+- 路径：`Assets/Scripts/Shared/StatsManager.cs`
+- Hierarchy 需要创建 StatsManager 空对象并挂载脚本
+- 包含 Player 和 NPC 所有属性（血量、伤害、速度、感知范围、行为概率等）
+- 使用 `StatsManager.Instance.属性名` 访问
+
+### 感知系统（2026-04-15）
+- **触发器方案失败**：CircleCollider2D + OnTriggerEnter2D 在 Unity 6 中无法检测 Player（能检测到地图物体 Confiner，但检测不到近距离的 Player）
+- **最终方案**：改用 `Physics2D.OverlapCircleAll` 每帧手动检测，不依赖触发器事件
+- **简化方案**：用 `detectionRadius` 数值字段代替 CircleCollider2D 引用，直接设置数值即可
+- 目标超出感知范围会丢失，冷却时间 = attackInterval（2秒）
+- Scene视图黄色圆圈可视化（Gizmos）
+
+### 已知问题
+- UnityConnectWebRequestException: 许可证验证失败，Clash切全局+重启Unity可解决
+
+## 待实现
+- [x] 血条/伤害数值 UI 显示
+- [ ] 死亡和重生逻辑
+- [ ] 其他职业（弓箭手、法师等）
+- [ ] 卡牌战斗 UI
+- [ ] 技能树/升级系统
+- [ ] 商店场景
+- [ ] 素材准备（AI生成/自画）
+
+## GitHub
+- 仓库：q1262437767-dotcom/Gametry1
+- 分支：Unity
+- 备份：D:\GAMETRY\ 全项目
