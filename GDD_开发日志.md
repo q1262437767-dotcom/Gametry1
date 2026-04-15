@@ -4,6 +4,95 @@
 
 ---
 
+## 📅 2026-04-15 战斗系统完善 + 数值管理 + UI
+
+### 🎮 完成功能
+
+| 功能 | 脚本/文件 | 说明 |
+|------|-----------|------|
+| 击退眩晕系统 | `PlayerHealth.cs`, `NPCWarriorAI.cs` | 击退力度=5，眩晕0.2秒 |
+| 眩晕禁止移动 | `Palyermovement.cs` | 读取 `isKnockedBack`，眩晕时禁止移动 |
+| 数值管理器 | `StatsManager.cs` | 单例模式，集中管理所有数值 |
+| 血条 UI | `PlayerHealth.cs` | Image + 锚点方案，根据血量百分比缩放 |
+| 属性面板 UI | `StatsUI.cs`, `StatsCanvasController.cs` | 4属性显示：Health/Strength/Speed/Knockback |
+| 暂停菜单 | `StatsCanvasController.cs` | P键打开/关闭，ESC关闭，TimeScale暂停 |
+| Strength 属性 | `StatsManager.cs` | Attack1=Strength×1, Attack2=Strength×1.5 |
+| 场景切换 | SceneManager | 学会基础场景加载 |
+
+### 📁 新增文件
+```
+Assets/Scripts/
+├─ StatsManager.cs           # 数值管理器（单例）
+├─ Player/
+│   ├─ StatsUI.cs            # 属性面板显示
+│   └─ StatsCanvasController.cs  # 暂停菜单控制
+└─ Shared/
+    └─ StatsManager.cs        # （路径可能调整）
+```
+
+### 📊 StatsManager 属性列表
+| 分类 | 属性 | 默认值 |
+|------|------|--------|
+| Player-Combat | playerAttack1Damage | Strength×1 |
+| Player-Combat | playerAttack2Damage | Strength×1.5 |
+| Player-Combat | playerKnockbackForce | 5 |
+| Player-Combat | playerKnockbackStunTime | 0.2 |
+| Player-Movement | playerMoveSpeed | 5 |
+| Player-Health | playerMaxHealth | 100 |
+| Player-Health | playerDefenseReduction | 10 |
+| NPC-Warrior | npcMaxHealth | 100 |
+| NPC-Warrior | npcAttackDamage | 10 |
+| NPC-Warrior | npcMoveSpeed | 2 |
+| NPC-Warrior | npcDetectionRadius | 3 |
+| NPC-Warrior | npcAttackInterval | 2 |
+| NPC-Warrior | npcAttackChance | 0.6 |
+| NPC-Warrior | npcDefenseChance | 0.4 |
+
+### 🔧 踩坑记录
+1. **Unity 6 触发器失效**: CircleCollider2D + OnTriggerEnter2D 检测不到Player，改用 `Physics2D.OverlapCircleAll`
+2. **isKnockedBack 警告**: 变量声明但未使用 → 在 Update() 添加 `if (isDead || isKnockedBack) return;`
+3. **Awake 单例模式**: 确保全局只有一个 StatsManager 实例
+
+### 📚 学习内容
+- 单例模式（Singleton）
+- Canvas Group 控制 UI 显示
+- Time.timeScale 控制游戏暂停
+- SceneManager.LoadScene 场景切换
+- AI 素材生成工具（Leonardo.ai）
+
+### ⏭️ 下一步
+- [ ] 卡牌系统接入
+- [ ] 技能树/升级系统
+- [ ] 其他职业（弓箭手、法师）
+- [ ] 商店场景
+- [ ] 素材准备（AI生成/自画）
+
+---
+
+## 📅 2026-04-14（晚）战斗系统 v2.0 - 伤害与死亡
+
+### 🎮 完成功能
+
+| 功能 | 脚本 | 说明 |
+|------|------|------|
+| Player 伤害系统 | `PlayerHealth.cs` | 新增，maxHealth=100，防御减10伤害 |
+| Player 防御 | `PlayerDefense.cs` | 按住K防御，isDefending标志位控制 |
+| NPC 伤害系统 | `NPCWarriorAI.cs` | maxHealth=100，死亡后Destroy |
+| NPC→Player 攻击 | `NPCWarriorAI.OnAttackHit()` | 通过GetComponent查找PlayerHealth |
+| NPC→NPC 互殴 | `NPCWarriorAI.OnAttackHit()` | 同时处理两种目标类型 |
+| 重复触发保护 | lastHitTime | 0.05秒时间窗口防止多次扣血 |
+
+### 🔧 防御逻辑
+- **Player**: 按住K → `isDefending=true` → `TakeDamage()` 伤害-10
+- **NPC**: 被攻击时40%概率防御 → 伤害-10
+
+### ⚠️ 踩坑记录
+1. **状态名检查不稳定**: Animator状态名可能变化，改用 `isAttacking` + `lastHitTime` 双保险
+2. **GetComponent返回null**: Player必须挂载PlayerHealth组件
+3. **动画事件多次触发**: 用 `Time.time - lastHitTime < 0.05f` 保护
+
+---
+
 ## 📅 2026-04-14（下午）战斗系统 v1.0
 
 ### 🎮 完成功能
