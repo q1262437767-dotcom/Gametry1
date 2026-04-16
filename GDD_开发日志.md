@@ -1,6 +1,46 @@
-# 《洪武铁匠》开发日志
+# 《至正铁匠》开发日志
 
 > 记录学习过程和功能迭代
+
+---
+
+## 📅 2026-04-16 物品系统 + 快捷栏 UI
+
+### 🎮 完成功能
+
+| 功能 | 脚本/文件 | 说明 |
+|------|-----------|------|
+| 物品数据基类 | `ItemSO.cs` | ScriptableObject，字段：itemName/description/icon/stackable/maxStack |
+| 快捷栏 UI | `InventorySlot.cs` | 7格底部快捷栏，显示图标和堆叠数量 |
+| 背包管理器 | `InventoryManger.cs` | 单例模式，AddItem 核心逻辑：可堆叠优先叠加，找空格子放新物品 |
+| 物品拾取 | `Loot.cs` | OnTriggerEnter2D 检测 Player，调用 AddItem，播放动画后销毁 |
+| 物品创建 | Meat Resource, Wood Resource | 右键 → Create → Item → New Item |
+
+### 📁 新增文件
+```
+Assets/Scripts/
+├─ Items/
+│   └─ ItemSO.cs              # 物品 ScriptableObject 基类
+├─ Inventory & Shop/
+│   ├─ InventorySlot.cs      # 快捷栏格子组件
+│   └─ InventoryManger.cs    # 背包管理器（单例）
+```
+
+### 🔧 踩坑记录
+1. **Animator Controller Invalid**：动画状态名写错或Controller未正确创建，重新创建Controller解决
+2. **"背包已满"误报**：Slots数组的 Icon Image 和 Count Text 未在 Inspector 中关联
+3. **数量文字不显示**：countText.enabled 在物体未激活时无效，改用 SetActive(true)
+
+### 📚 学习内容
+- ScriptableObject 数据容器
+- UI 父子 Canvas 结构
+- 单例模式管理器
+- Collider2D 触发检测
+
+### ⏭️ 下一步
+- [ ] 商店 NPC 功能
+- [ ] 物品使用/消耗逻辑
+- [ ] 更多物品类型
 
 ---
 

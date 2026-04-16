@@ -88,16 +88,24 @@ Assets/Scripts/
 ### 已知问题
 - UnityConnectWebRequestException: 许可证验证失败，Clash切全局+重启Unity可解决
 
+### 物品系统（2026-04-16）
+- 创建 `ItemSO.cs`：ScriptableObject基类，字段：itemName/itemDescription/icon
+- 路径：`Assets/Scripts/Items/ItemSO.cs`
+- 右键 → Create → Item → New Item 创建物品数据文件
+
+### 踩坑记录
+- Animator Controller Invalid：动画状态名写错或Controller未正确创建，重新创建Controller解决
+
 ## 待实现
 - [x] 血条/伤害数值 UI 显示
 - [ ] 死亡和重生逻辑
 - [ ] 其他职业（弓箭手、法师等）
 - [ ] 卡牌战斗 UI
 - [ ] 技能树/升级系统
-- [ ] 商店场景
-- [ ] 素材准备（AI生成/自画）
+- [x] 商店场景（进行中）
+- [x] 素材准备（Aseprite已编译）
 
 ## GitHub
 - 仓库：q1262437767-dotcom/Gametry1
-- 分支：Unity
+- 分支：Unity（旧，已废弃，内容在main）
 - 备份：D:\GAMETRY\ 全项目
