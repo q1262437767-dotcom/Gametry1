@@ -88,10 +88,14 @@ Assets/Scripts/
 ### 已知问题
 - UnityConnectWebRequestException: 许可证验证失败，Clash切全局+重启Unity可解决
 
-### 物品系统（2026-04-16）
-- 创建 `ItemSO.cs`：ScriptableObject基类，字段：itemName/itemDescription/icon
-- 路径：`Assets/Scripts/Items/ItemSO.cs`
-- 右键 → Create → Item → New Item 创建物品数据文件
+### 物品系统（2026-04-16, 2026-04-17大更新）
+- 路径：`Assets/Scripts/Inventory & Shop/`
+- **ItemSO.cs**：ScriptableObject基类，字段：itemName/itemDescription/icon/isGold/isUsable/healAmount/speedBuffAmount/speedBuffDuration/currentHealth/maxHealth/speed/damage/duration/isStackable/maxStack/pickupQuantity
+- **InventoryManger.cs**：单例管理器 + InventorySlot内部类；热键1-7选格子（放大1.2x）；E使用物品；Q长按机制：<1秒松手丢1个，>1秒进入长按模式（每帧丢1个），松手停止；长按丢全部=格子总数量；每帧生成1个 loot Prefab；lootPrefab字段拖入 Prefab；生成时+随机横向偏移
+- **Loot.cs**：Awake+RefreshVisuals运行时设置图标；pickupCooldown=2秒防止瞬捡；OnTriggerEnter2D按pickupQuantity捡起后Destroy；Loot.quantity保存掉落物数量（目前搁置备用）
+- **InventorySlotUI.cs**：每个格子挂载，通过GetComponentInChildren<Button>()响应点击并调用SelectSlot
+- **踩坑**：UpdateUI()中countText.enabled=false后没有在非null分支重置为true，导致捡起堆叠物品后数量文字不显示
+- 右键 → Create → Item → New Item 创建物品数据文件（ItemSOs/文件夹下）
 
 ### 踩坑记录
 - Animator Controller Invalid：动画状态名写错或Controller未正确创建，重新创建Controller解决
