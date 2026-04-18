@@ -97,6 +97,19 @@ Assets/Scripts/
 - **踩坑**：UpdateUI()中countText.enabled=false后没有在非null分支重置为true，导致捡起堆叠物品后数量文字不显示
 - 右键 → Create → Item → New Item 创建物品数据文件（ItemSOs/文件夹下）
 
+### 场景切换系统（2026-04-18 完成）
+- **SceneChanger.cs**：Collider2D触发器+淡入淡出动画（FadeToDark）+定点传送（newPlayerPosition）
+- **GameManager.cs**：单例+持久化+DontDestroyOnLoad；切换回旧场景时先销毁自身管理的对象再销毁自己，防止重复生成
+- 持久化对象：Player、Canvas、EventSystem等
+- Build Settings 加入 MAP1、MAP2
+- URP项目需设置 Graphics → Default Render Pipeline，否则黑屏
+- SPUM 示例场景在 URP 下需要 Global Light 2D 才能正常渲染精灵
+
+### 素材系统（2026-04-18）
+- **Cainos - Pixel Art Top Down Basic**（免费）：俯视角Tileset，高度分层Sorting Layers，Tilemap画地图，Stair Layer Trigger处理楼梯遮挡
+- **SPUM (2D Pixel Unit Maker)**：捏角色工具，7种动画状态（IDLE/MOVE/ATTACK/DAMAGED/DEBUFF/DEATH/OTHER），PlayerObj.cs含移动+转身逻辑
+- 导出 Prefab 可替换 Gametry 主项目的 NPC 精灵
+
 ### 踩坑记录
 - Animator Controller Invalid：动画状态名写错或Controller未正确创建，重新创建Controller解决
 
